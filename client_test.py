@@ -10,8 +10,7 @@ class ClientTest(unittest.TestCase):
     """ ------------ Add the assertion below ------------ """
     for quote in quotes:
       data = getDataPoint(quote)
-      self.assertIsNotNone(data)
-      print(f"Stock: {data[0]}, Price: {data[3]}")
+      self.assertEqual(data[3], (quote["top_ask"]["price"]+quote["top_bid"]["price"])/2)
 
   def test_getDataPoint_calculatePriceBidGreaterThanAsk(self):
     quotes = [
@@ -20,13 +19,15 @@ class ClientTest(unittest.TestCase):
     ]
     """ ------------ Add the assertion below ------------ """
     for quote in quotes:
+      isBid = quote["top_bid"]["price"] if quote["top_ask"]["price"]<quote["top_bid"]["price"] else None
+      price = (quote["top_bid"]["price"]+quote["top_ask"]["price"])/2
+      isPrice = price if quote["top_ask"]["price"]<price else None
       data = getDataPoint(quote)
       self.assertIsNotNone(data)
-      stock, bid, ask, price = data
-      print(f"Stock: {stock}")
-      self.assertGreater(bid, ask)
-      self.assertGreater(price, ask)
-      print("Bid and price is greater than ask")
+      bid = data[1] if getRatio(data[1],data[2])>1 else None
+      price = data[3] if getRatio(data[3],data[2])>1 else None
+      self.assertEqual(isBid, bid)
+      self.assertEqual(isPrice, price)
 
 
   """ ------------ Add more unit tests ------------ """
@@ -38,12 +39,15 @@ class ClientTest(unittest.TestCase):
 
     """ ------------ Add the assertion below ------------ """
     for quote in range(len(quotes)-1):
+      price_A = (quotes[quote]["top_bid"]["price"]+quotes[quote]["top_ask"]["price"])/2
+      price_B = (quotes[quote+1]["top_bid"]["price"]+quotes[quote+1]["top_ask"]["price"])/2
+      greater_1 = price_A if price_A>price_B else price_B
       dataA = getDataPoint(quotes[quote])
-      stockA, priceA = dataA[0], dataA[3]
+      priceA = dataA[3]
       dataB = getDataPoint(quotes[quote+1])
-      stockB, priceB = dataB[0], dataB[3]
-      self.assertGreaterEqual(getRatio(priceA, priceB),1)
-      print(f"{stockA}'s price is greater than and equal to {stockB}'s price")
+      priceB = dataB[3]
+      greater_2 = priceA if getRatio(priceA, priceB)>1 else priceB
+      self.assertEqual(greater_1, greater_2)
 
 
 
